@@ -21,7 +21,7 @@ class LEDArray:
     def leds(self) -> list[LED]:
         """Property used to load the set of LEDs in the array."""
         return self._leds
-    
+
     def length(self) -> int:
         """Returns the number of LEDs in the array."""
         return len(self._leds)
