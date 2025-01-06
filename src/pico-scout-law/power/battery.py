@@ -18,7 +18,6 @@ class Battery:
         self._empty_v = empty_v
         self._c_rate_discharge = discharge_rate
 
-
     @staticmethod
     def _conversion_factor() -> float:
         """Calculates the conversion factor of the voltage"""
