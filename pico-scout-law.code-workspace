@@ -12,8 +12,10 @@
 		"python.languageServer": "Pylance",
 		"cSpell.words": [
 			"autopull",
+			"pico",
 			"shiftdir",
-			"sideset"
+			"sideset",
+			"vsys"
 		]
 	}
 }
