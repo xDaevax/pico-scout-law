@@ -14,6 +14,10 @@ class OutputProvider:
         """Clears the contents of the display."""
         self._configuration.display().fill(0)
 
+    def get_last_line(self):
+        """Returns the current line that is highest in the buffer."""
+        return len(self._lines) - 1
+
     def set_graphic_line(self, index: int):
         """Draws a horizontal line"""
         if self._line_exists(index):

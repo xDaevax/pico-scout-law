@@ -1,12 +1,8 @@
 from machine import Pin, Timer
-import sys
 import time
-sys.path.append('drivers/')
-sys.path.append('providers/')
-sys.path.append('power/')
 from drivers import (RP2040)
 from power import (Battery)
-from scouts import (StatusDisplayService)
+from scouts import (StatusDisplayService, ConsoleDisplayService)
 
 
 class DisplayEngine:
@@ -15,15 +11,19 @@ class DisplayEngine:
     _battery: Battery
     _display_timer: Timer
     _status_display_service: StatusDisplayService
+    _console_display_service: ConsoleDisplayService
     _pico: RP2040
     _charging_pin: Pin | None
+    _last_power_state: bool
 
-    def __init__(self, pico: RP2040, status_display_service: StatusDisplayService):
-        self._battery = Battery('Adafruit Industries', 'ICR18650')
+    def __init__(self, pico: RP2040, battery: Battery, status_display_service: StatusDisplayService, console_display_service: ConsoleDisplayService):
+        self._battery = battery
         self._display_timer = Timer()
         self._charging_pin = None #  TODO: This should not be hard-coded here and the variable shouldn't even be known in the display engine.  Need some kind of abstraction for this.
         self._pico = pico
         self._status_display_service = status_display_service
+        self._console_display_service = console_display_service
+        self._last_power_state = False
 
     def __init_charging_pin(self):
         """Initializes the charging pin."""
@@ -32,22 +32,35 @@ class DisplayEngine:
 
     def start_render(self):
         self._status_display_service.initialize()
-        while True:
-            self.render()
-            time.sleep(1)
+        self._console_display_service.initialize()
+        
+        self._display_timer.init(period=1000, callback=lambda t:self.render())
 
     def pause_render(self):
         self._display_timer.deinit()
 
     def render(self):
-         self.__init_charging_pin()
+        self.__init_charging_pin()
 
-         assert self._charging_pin is not None
-         self._status_display_service.update_power(self._charging_pin.value() == 1, self._battery)
-         self._status_display_service.update_temperature(self._pico.read_temperature())
-         self._status_display_service.update_tick()
-         self._status_display_service.update_system_info()
-         self._status_display_service.refresh()
+        assert self._charging_pin is not None
+        is_charging = self._charging_pin.value() == 1
+
+        self._status_display_service.update_power(is_charging, self._battery)
+        self._status_display_service.update_temperature(self._pico.read_temperature())
+        self._status_display_service.update_tick()
+        self._status_display_service.update_system_info()
+
+        if (is_charging != self._last_power_state):
+            message = "Plugged-in"
+
+            if (not is_charging):
+                message = "Unplugged"
+            
+            self._console_display_service.set_next(1, message)
+        
+        self._status_display_service.refresh()
+        self._console_display_service.refresh()
+        self._last_power_state = is_charging
 
 charge_status_char = "̅"
 
